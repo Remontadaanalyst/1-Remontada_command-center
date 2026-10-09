@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScoutAI — Bias Detector</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg: #090c0d;
+  --panel: #14181a;
+  --panel-2: #191f21;
+  --line: #262c2e;
+  --ink: #eef2f2;
+  --dim: #7c8688;
+  --turf: #29d17c;
+  --gold: #ffb300;
+  --danger: #ff3b52;
+  --display: 'Bebas Neue', sans-serif;
+  --body: 'Inter', sans-serif;
+}
+*{box-sizing:border-box;}
+body{
+  font-family: var(--body);
+  background: radial-gradient(ellipse 900px 500px at 50% -10%, rgba(41,209,124,0.07), transparent 60%), var(--bg);
+  color: var(--ink); margin:0; padding:22px 16px;
+  min-height:100vh;
+}
+.masthead{ text-align:center; margin-bottom:24px; }
+.masthead .eyebrow{ font-weight:700; letter-spacing:4px; font-size:11px; color: var(--turf); text-transform:uppercase; }
+h1{ font-family: var(--display); font-weight:400; letter-spacing:2px; font-size:32px; margin:4px 0 0; }
+.subtext{ color: var(--dim); font-size:13px; margin:6px 0 0; }
+
+.back-link{
+  display:inline-flex; align-items:center; gap:6px;
+  color: var(--dim); text-decoration:none; font-size:13px; font-weight:600;
+  margin-bottom:16px; transition:.15s;
+}
+.back-link:hover{ color: var(--turf); }
+
+.container{ max-width:480px; margin:0 auto; }
+
+.input-group{
+  background: var(--panel); border:1px solid var(--line);
+  border-radius:12px; padding:14px 16px; margin-bottom:12px;
+}
+.input-group label{
+  display:block; font-size:11px; font-weight:700;
+  color: var(--dim); text-transform:uppercase; letter-spacing:1px;
+  margin-bottom:6px;
+}
+.input-group input, .input-group select{
+  width:100%; background: var(--panel-2); border:1px solid var(--line);
+  border-radius:8px; padding:10px 12px; color: var(--ink);
+  font-size:14px; font-family: var(--body);
+}
+.input-group input:focus, .input-group select:focus{
+  outline:none; border-color: var(--turf);
+}
+
+.btn{
+  width:100%; background: var(--turf); color:#062015;
+  border:none; padding:14px; border-radius:12px;
+  font-size:15px; font-weight:800; cursor:pointer;
+  transition:.12s; margin-top:8px;
+}
+.btn:hover{ filter:brightness(1.1); }
+
+.result-panel{
+  background: var(--panel); border:1px solid var(--line);
+  border-radius:16px; padding:20px; margin-top:20px;
+  display:none;
+}
+.result-panel.visible{ display:block; animation: fadeIn .3s ease; }
+@keyframes fadeIn{ from{opacity:0; transform:translateY(8px);} to{opacity:1;} }
+
+.gem-badge{
+  display:inline-flex; align-items:center; gap:6px;
+  background: rgba(255,179,0,0.15); border:1px solid rgba(255,179,0,0.4);
+  color: var(--gold); padding:6px 14px; border-radius:99px;
+  font-size:12px; font-weight:700; margin-bottom:12px;
+}
+.gem-badge.hidden{ display:none; }
+
+.score-row{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:10px 0; border-bottom:1px solid var(--line);
+}
+.score-row:last-child{ border-bottom:none; }
+.score-label{ font-size:13px; color: var(--dim); }
+.score-value{ font-size:18px; font-weight:800; font-family: var(--display); }
+.score-value.raw{ color: var(--dim); }
+.score-value.adjusted{ color: var(--turf); }
+.score-value.gem{ color: var(--gold); }
+
+.explanation{
+  margin-top:14px; padding:12px; background: var(--panel-2);
+  border-radius:8px; font-size:13px; line-height:1.6;
+  color: var(--ink);
+}
+
+.sample-players{
+  margin-top:20px;
+}
+.sample-players h3{
+  font-family: var(--display); font-weight:400; letter-spacing:1px;
+  font-size:16px; color: var(--dim); margin:0 0 10px;
+}
+.sample-chip{
+  display:inline-flex; align-items:center; gap:8px;
+  background: var(--panel-2); border:1px solid var(--line);
+  padding:8px 14px; border-radius:99px; margin:0 6px 8px 0;
+  font-size:12px; cursor:pointer; transition:.12s;
+}
+.sample-chip:hover{ border-color: var(--turf); }
+.sample-chip .num{ font-weight:800; color: var(--turf); }
+.sample-chip .month{ color: var(--dim); }
+</style>
+</head>
+<body>
+
+<a href="commad-center.html" class="back-link">← Back to Command Center</a>
+
+<div class="masthead">
+  <div class="eyebrow">AI Analysis</div>
+  <h1>Bias Detector</h1>
+  <p class="subtext">Corrects for Relative Age Effect in talent scouting</p>
+</div>
+
+<div class="container">
+
+  <div class="input-group">
+    <label>Player Name</label>
+    <input type="text" id="pName" placeholder="e.g. Rahul Sharma">
+  </div>
+
+  <div class="input-group">
+    <label>Birth Month</label>
+    <select id="pMonth">
+      <option value="">Select month...</option>
+      <option value="1">January</option>
+      <option value="2">February</option>
+      <option value="3">March</option>
+      <option value="4">April</option>
+      <option value="5">May</option>
+      <option value="6">June</option>
+      <option value="7">July</option>
+      <option value="8">August</option>
+      <option value="9">September</option>
+      <option value="10">October</option>
+      <option value="11">November</option>
+      <option value="12">December</option>
+    </select>
+  </div>
+
+  <div class="input-group">
+    <label>Position</label>
+    <select id="pPosition">
+      <option value="">Select position...</option>
+      <option value="GK">Goalkeeper</option>
+      <option value="DEF">Defender</option>
+      <option value="MID">Midfielder</option>
+      <option value="FWD">Forward</option>
+    </select>
+  </div>
+
+  <div class="input-group">
+    <label>Raw Performance Score (0-100)</label>
+    <input type="number" id="pRaw" min="0" max="100" placeholder="e.g. 55">
+  </div>
+
+  <button class="btn" onclick="analyze()">🔍 Analyze Player</button>
+
+  <div class="result-panel" id="result">
+    <div class="gem-badge" id="gemBadge">⭐ HIDDEN GEM DETECTED</div>
+    
+    <div class="score-row">
+      <span class="score-label">Raw Score</span>
+      <span class="score-value raw" id="rawDisplay">—</span>
+    </div>
+    <div class="score-row">
+      <span class="score-label">Bias Factor</span>
+      <span class="score-value" id="biasDisplay">—</span>
+    </div>
+    <div class="score-row">
+      <span class="score-label">Age-Adjusted Score</span>
+      <span class="score-value adjusted" id="adjDisplay">—</span>
+    </div>
+    <div class="score-row">
+      <span class="score-label">Percentile Rank</span>
+      <span class="score-value gem" id="pctDisplay">—</span>
+    </div>
+    
+    <div class="explanation" id="explanation"></div>
+  </div>
+
+  <div class="sample-players">
+    <h3>Quick Test — Sample Players</h3>
+    <div class="sample-chip" onclick="loadSample(0)">
+      <span class="num">#14</span>
+      <span>Rahul Sharma</span>
+      <span class="month">Dec</span>
+    </div>
+    <div class="sample-chip" onclick="loadSample(1)">
+      <span class="num">#8</span>
+      <span>Arjun Patel</span>
+      <span class="month">Jan</span>
+    </div>
+    <div class="sample-chip" onclick="loadSample(2)">
+      <span class="num">#21</span>
+      <span>Vikram Rao</span>
+      <span class="month">Nov</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// RAE Bias Factors based on research: Q1 overrepresented by ~40%
+const biasFactors = {
+  1: 1.40, 2: 1.35, 3: 1.30,   // Q1: heavily favored
+  4: 1.10, 5: 1.05, 6: 1.00,   // Q2: slight bias
+  7: 0.95, 8: 0.90, 9: 0.85,   // Q3: underrepresented
+  10: 0.80, 11: 0.75, 12: 0.70 // Q4: heavily underrepresented
+};
+
+const samples = [
+  { name: "Rahul Sharma", month: 12, position: "MID", raw: 55 },
+  { name: "Arjun Patel", month: 1, position: "FWD", raw: 78 },
+  { name: "Vikram Rao", month: 11, position: "DEF", raw: 62 }
+];
+
+function loadSample(idx) {
+  const s = samples[idx];
+  document.getElementById('pName').value = s.name;
+  document.getElementById('pMonth').value = s.month;
+  document.getElementById('pPosition').value = s.position;
+  document.getElementById('pRaw').value = s.raw;
+  analyze();
+}
+
+function analyze() {
+  const name = document.getElementById('pName').value || "Player";
+  const month = parseInt(document.getElementById('pMonth').value);
+  const raw = parseInt(document.getElementById('pRaw').value);
+  
+  if (!month || isNaN(raw)) {
+    alert("Please fill in birth month and raw score");
+    return;
+  }
+  
+  const biasFactor = biasFactors[month];
+  const adjusted = Math.min(100, Math.round(raw / biasFactor));
+  const percentile = Math.min(100, Math.round(adjusted * 0.95 + 5)); // Simplified percentile
+  
+  const isHiddenGem = (raw < 70 && adjusted > 85);
+  
+  document.getElementById('rawDisplay').textContent = raw;
+  document.getElementById('biasDisplay').textContent = biasFactor.toFixed(2) + "x";
+  document.getElementById('adjDisplay').textContent = adjusted;
+  document.getElementById('pctDisplay').textContent = percentile + "th";
+  
+  const gemBadge = document.getElementById('gemBadge');
+  gemBadge.classList.toggle('hidden', !isHiddenGem);
+  
+  const monthNames = ["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  let explanation = "";
+  
+  if (isHiddenGem) {
+    explanation = `<strong>🎯 HIDDEN GEM:</strong> ${name} was born in ${monthNames[month]} — one of the most underrepresented birth months in academies. Their raw score of ${raw} understates their true ability. When corrected for Relative Age Effect (bias factor: ${biasFactor.toFixed(2)}x), they score <strong>${adjusted}</strong> — placing them in the <strong>${percentile}th percentile</strong>. Scouts looking at raw data would miss this player entirely.`;
+  } else if (adjusted > raw) {
+    explanation = `<strong>📈 Age-Adjusted:</strong> ${name} (born ${monthNames[month]}) gets a boost from ${raw} to <strong>${adjusted}</strong> after RAE correction. Bias factor: ${biasFactor.toFixed(2)}x. Final percentile: <strong>${percentile}th</strong>.`;
+  } else {
+    explanation = `<strong>📊 Analysis:</strong> ${name} (born ${monthNames[month]}) scores <strong>${adjusted}</strong> after RAE correction (raw: ${raw}, bias factor: ${biasFactor.toFixed(2)}x). Percentile: <strong>${percentile}th</strong>.`;
+  }
+  
+  document.getElementById('explanation').innerHTML = explanation;
+  document.getElementById('result').classList.add('visible');
+}
+</script>
+
+</body>
+</html>

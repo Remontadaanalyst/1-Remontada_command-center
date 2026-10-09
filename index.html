@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Remontada Pro Scout — Pitch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #090c0d;
+    --panel: #14181a;
+    --panel-2: #191f21;
+    --line: #262c2e;
+    --ink: #eef2f2;
+    --dim: #7c8688;
+    --turf: #29d17c;
+    --gold: #ffb300;
+    --danger: #ff3b52;
+    --display: 'Bebas Neue', sans-serif;
+    --body: 'Inter', sans-serif;
+  }
+
+  *{ box-sizing:border-box; }
+  body{
+    font-family: var(--body);
+    background:
+      radial-gradient(ellipse 900px 500px at 50% -10%, rgba(41,209,124,0.07), transparent 60%),
+      var(--bg);
+    color: var(--ink);
+    margin:0; padding:22px 16px 40px; text-align:center;
+  }
+
+  .masthead .eyebrow{
+    font-weight:700; letter-spacing:4px; font-size:11px; color: var(--turf); text-transform:uppercase;
+  }
+  h2{ font-family: var(--display); font-weight:400; letter-spacing:2px; font-size:34px; margin:2px 0 4px; }
+  .subtext{ color: var(--dim); font-size:13px; margin:0 0 16px; }
+
+  /* Match clock + start control */
+  #clock-bar{
+    display:flex; align-items:center; justify-content:center; gap:12px;
+    margin: 0 auto 18px; flex-wrap:wrap;
+  }
+  #match-clock{
+    background: var(--panel); border:1px solid var(--line); padding:10px 22px;
+    border-radius:99px; font-family:'Arial Black', sans-serif; font-size:18px;
+    letter-spacing:1px; color: var(--dim); display:flex; align-items:center; gap:9px;
+    min-width:150px; justify-content:center; transition:.25s;
+  }
+  #match-clock .dot{ width:8px; height:8px; border-radius:50%; background:var(--dim); }
+  #match-clock.running{ border-color: var(--turf); color: var(--ink); box-shadow:0 0 16px rgba(41,209,124,0.2); }
+  #match-clock.running .dot{ background: var(--turf); box-shadow:0 0 8px var(--turf); animation: pulse-dot 1.2s infinite; }
+  @keyframes pulse-dot{ 0%,100%{ opacity:1; } 50%{ opacity:0.35; } }
+
+  #start-btn{
+    background: var(--turf); color:#062015; border:none; padding:11px 26px;
+    border-radius:99px; font-size:14px; font-weight:800; letter-spacing:0.5px;
+    cursor:pointer; font-family: var(--body); transition:.12s;
+  }
+  #start-btn:hover{ background:#3ee78f; }
+  #start-btn:disabled{ background: var(--panel-2); color: var(--dim); cursor:default; border:1px solid var(--line); }
+  #start-btn.flash-tap{ transform:scale(0.94); filter:brightness(1.2); }
+
+  /* Live radar strip (last tap sent) */
+  #radar-box{
+    background: var(--panel); border:1px solid var(--line); padding:9px 22px;
+    border-radius:99px; font-size:13px; font-weight:600; letter-spacing:0.5px; color: var(--dim);
+    margin: 0 auto 18px; display:flex; align-items:center; gap:9px; justify-content:center;
+    max-width:440px; transition:.25s;
+  }
+  #radar-box .dot{ width:8px; height:8px; border-radius:50%; background:var(--dim); transition:.25s; }
+  .flash-radar{ border-color: var(--turf) !important; color: var(--ink) !important; box-shadow:0 0 20px rgba(41,209,124,0.25); }
+  .flash-radar .dot{ background: var(--turf) !important; box-shadow:0 0 8px var(--turf); }
+
+  #pitch-wrap{ position:relative; display:inline-block; }
+  #pitch {
+    width: 90vw; height: 55vw; max-width: 900px; max-height: 550px;
+    background-color: #10231a; border: 2px solid #3a4a3f;
+    border-radius:14px;
+    margin: 0 auto; position: relative; overflow: hidden;
+    cursor: crosshair; box-shadow: 0 10px 30px rgba(0,0,0,0.55), inset 0 0 60px rgba(41,209,124,0.05);
+    transition:.2s;
+  }
+  #pitch.locked{ cursor:not-allowed; filter:saturate(0.5) brightness(0.6); }
+
+  #pitch-lock-msg{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    flex-direction:column; gap:10px; color: var(--ink); font-family: var(--display);
+    font-size:20px; letter-spacing:1px; background:rgba(9,12,13,0.35); z-index:5;
+    pointer-events:none; text-align:center; padding:0 20px;
+  }
+  #pitch-lock-msg span.small{ font-family: var(--body); font-size:12px; color: var(--dim); letter-spacing:0.3px; }
+
+  /* Pitch markings — turf green theme */
+  .halfway-line { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,0.65); transform: translateX(-50%); }
+  .center-circle { position: absolute; left: 50%; top: 50%; width: 120px; height: 120px; border: 2px solid rgba(255,255,255,0.65); border-radius: 50%; transform: translate(-50%, -50%); }
+  .center-dot { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; background: rgba(255,255,255,0.65); border-radius: 50%; transform: translate(-50%, -50%); }
+  .penalty-box-left { position: absolute; left: 0; top: 20%; bottom: 20%; width: 15%; border: 2px solid rgba(255,255,255,0.65); border-left: none; }
+  .penalty-box-right { position: absolute; right: 0; top: 20%; bottom: 20%; width: 15%; border: 2px solid rgba(255,255,255,0.65); border-right: none; }
+
+  /* Goal mouth — the actual frame */
+  .goal-post{
+    position:absolute; top:42%; bottom:42%; width:8px;
+    border:2px solid rgba(255,255,255,0.9);
+    background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.12) 0 2px, transparent 2px 6px);
+  }
+  .goal-post.left{ left:-2px; border-right:none; border-radius:3px 0 0 3px; }
+  .goal-post.right{ right:-2px; border-left:none; border-radius:0 3px 3px 0; }
+
+  /* Tappable goal zone — bigger than the frame, forgiving to tap, tagged as Shot + Goal */
+  .goal-zone{
+    position:absolute; top:36%; bottom:36%; width:7%;
+    background: rgba(255,179,0,0.08); border:1px dashed rgba(255,179,0,0.45);
+    border-radius:6px; pointer-events:none;
+  }
+  .goal-zone.left{ left:0; border-left:none; border-radius:0 6px 6px 0; }
+  .goal-zone.right{ right:0; border-right:none; border-radius:6px 0 0 6px; }
+  .goal-zone .glabel{
+    position:absolute; top:-16px; left:50%; transform:translateX(-50%);
+    font-size:8px; font-weight:800; letter-spacing:1px; color: var(--gold);
+    white-space:nowrap; text-transform:uppercase;
+  }
+  .goal-zone.right .glabel{ left:auto; right:50%; transform:translateX(50%); }
+
+  /* Floating "GOAL!" callout on a goal-zone tap */
+  .goal-flash{
+    position:absolute; transform:translate(-50%,-50%); pointer-events:none;
+    font-family: var(--display); font-size:22px; letter-spacing:1px; color: var(--gold);
+    text-shadow:0 0 10px rgba(255,179,0,0.8), 0 2px 4px rgba(0,0,0,0.6);
+    animation: goal-pop 1.1s ease-out forwards; white-space:nowrap;
+  }
+  @keyframes goal-pop{
+    0%{ opacity:0; transform:translate(-50%,-50%) scale(0.6); }
+    20%{ opacity:1; transform:translate(-50%,-50%) scale(1.1); }
+    100%{ opacity:0; transform:translate(-50%,-140%) scale(1); }
+  }
+  .goal-ripple{
+    position: absolute; width: 20px; height: 20px; background-color: var(--gold);
+    border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none;
+    animation: goal-ping 0.7s ease-out forwards;
+  }
+  @keyframes goal-ping {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; box-shadow: 0 0 14px var(--gold), 0 0 28px var(--gold); }
+    100% { transform: translate(-50%, -50%) scale(5); opacity: 0; }
+  }
+
+  .tap-ripple {
+    position: absolute; width: 20px; height: 20px; background-color: var(--turf);
+    border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none;
+    animation: ping 0.6s ease-out forwards;
+  }
+  @keyframes ping {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; box-shadow: 0 0 10px var(--turf), 0 0 20px var(--turf); }
+    100% { transform: translate(-50%, -50%) scale(4); opacity: 0; }
+  }
+
+  /* faint trail of recent taps so you can confirm placement */
+  .tap-mark{
+    position:absolute; width:8px; height:8px; border-radius:50%;
+    background: var(--turf); transform:translate(-50%,-50%); pointer-events:none;
+    box-shadow:0 0 6px rgba(41,209,124,0.7); opacity:0.85; transition: opacity 4s linear;
+  }
+
+  #undo-tap-btn{
+    background: var(--danger); color:white; border:none; padding:11px 24px;
+    border-radius:99px; font-size:14px; font-weight:800; letter-spacing:0.3px;
+    cursor:pointer; font-family: var(--body); transition:.12s;
+  }
+  #undo-tap-btn:hover{ background:#ff5568; }
+  #undo-tap-btn:disabled{ background: var(--panel-2); color: var(--dim); cursor:default; border:1px solid var(--line); }
+  #undo-tap-btn.flash-tap{ transform:scale(0.94); filter:brightness(1.2); }
+</style>
+</head>
+<body>
+
+  <div class="masthead">
+    <div class="eyebrow">Live Tagging</div>
+    <h2>Remontada Live Pitch</h2>
+  </div>
+  <p class="subtext">Tap the pitch to send coordinates to the Command Center</p>
+
+  <div id="clock-bar">
+    <button id="start-btn" onclick="flashTap(this); startMatch()">▶ Start Match</button>
+    <div id="match-clock"><span class="dot"></span><span id="clock-text">00:00</span></div>
+    <button id="undo-tap-btn" onclick="flashTap(this); undoLastTap()" disabled>⏪ Undo Last Tap</button>
+  </div>
+
+  <div id="radar-box"><span class="dot"></span><span id="radar-text">Waiting for first tap…</span></div>
+
+  <div id="pitch-wrap">
+    <div id="pitch" class="locked" onclick="logEvent(event)">
+      <div class="halfway-line"></div>
+      <div class="center-circle"></div>
+      <div class="center-dot"></div>
+      <div class="penalty-box-left"></div>
+      <div class="penalty-box-right"></div>
+      <div class="goal-zone left"><span class="glabel">Goal</span></div>
+      <div class="goal-zone right"><span class="glabel">Goal</span></div>
+      <div class="goal-post left"></div>
+      <div class="goal-post right"></div>
+      <div id="pitch-lock-msg">
+        Tap "Start Match" to begin
+        <span class="small">Taps won't be logged until kickoff</span>
+      </div>
+    </div>
+  </div>
+
+<script>
+  let matchStarted = false;
+  let kickoffMs = 0;
+  let clockInterval = null;
+  let tapHistory = []; // { data, markEl }
+
+  function flashTap(el){
+    el.classList.add('flash-tap');
+    setTimeout(() => el.classList.remove('flash-tap'), 140);
+  }
+
+  function pad(n){ return n.toString().padStart(2, '0'); }
+
+  function formatClock(totalSeconds){
+    const m = Math.floor(totalSeconds / 60);
+    const s = totalSeconds % 60;
+    return `${pad(m)}:${pad(s)}`;
+  }
+
+  // A tap inside either goal mouth (matches the .goal-zone CSS: middle 28% of height,
+  // outer 7% of width on each side) is auto-tagged as a Shot that resulted in a Goal.
+  function checkGoalZone(x, y, rect){
+    const yFrac = y / rect.height;
+    if (yFrac < 0.36 || yFrac > 0.64) return null;
+    if (x <= rect.width * 0.07) return 'left';
+    if (x >= rect.width * 0.93) return 'right';
+    return null;
+  }
+
+  function startMatch(){
+    if (matchStarted) return;
+    matchStarted = true;
+    kickoffMs = Date.now();
+
+    document.getElementById('start-btn').disabled = true;
+    document.getElementById('start-btn').innerText = '● Match Live';
+    document.getElementById('match-clock').classList.add('running');
+    document.getElementById('pitch').classList.remove('locked');
+    document.getElementById('pitch-lock-msg').style.display = 'none';
+
+    clockInterval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - kickoffMs) / 1000);
+      document.getElementById('clock-text').innerText = formatClock(elapsed);
+    }, 1000);
+  }
+
+  function currentMatchSeconds(){
+    if (!matchStarted) return 0;
+    return Math.floor((Date.now() - kickoffMs) / 1000);
+  }
+
+  function logEvent(event) {
+    if (!matchStarted) return; // ignore taps before kickoff
+
+    let pitch = document.getElementById("pitch");
+    let rect = pitch.getBoundingClientRect();
+    let x = Math.round(event.clientX - rect.left);
+    let y = Math.round(event.clientY - rect.top);
+
+    const matchSeconds = currentMatchSeconds();
+    const matchTime = formatClock(matchSeconds); // running match clock, not wall-clock time
+    const goalSide = checkGoalZone(x, y, rect); // 'left' | 'right' | null
+
+    // THE INVISIBLE BRIDGE: Send to Command Center
+    let tapData = {
+      x: x, y: y, matchTime: matchTime, matchSeconds: matchSeconds, id: Date.now(),
+      eventType: goalSide ? 'shot' : 'tap',
+      result: goalSide ? 'goal' : null,
+      goalSide: goalSide
+    };
+    localStorage.setItem("remontada_live_tap", JSON.stringify(tapData));
+
+    if (goalSide) {
+      // Distinct gold burst instead of the normal green ripple/trail — this was a goal.
+      let ripple = document.createElement("div");
+      ripple.className = "goal-ripple";
+      ripple.style.left = x + "px";
+      ripple.style.top = y + "px";
+      pitch.appendChild(ripple);
+      setTimeout(() => { if (ripple.isConnected) ripple.remove(); }, 700);
+
+      let flash = document.createElement("div");
+      flash.className = "goal-flash";
+      flash.style.left = x + "px";
+      flash.style.top = y + "px";
+      flash.innerText = "⚽ GOAL!";
+      pitch.appendChild(flash);
+      setTimeout(() => { if (flash.isConnected) flash.remove(); }, 1150);
+
+      tapHistory.push({ data: tapData, markEl: ripple });
+      document.getElementById('undo-tap-btn').disabled = false;
+
+      const radar = document.getElementById('radar-box');
+      document.getElementById('radar-text').innerText = `🥅 GOAL SCORED — ${matchTime}' · ${goalSide === 'left' ? 'Left' : 'Right'} goal`;
+      radar.classList.add('flash-radar');
+      setTimeout(() => radar.classList.remove('flash-radar'), 1200);
+      return;
+    }
+
+    // Visual tap ripple
+    let ripple = document.createElement("div");
+    ripple.className = "tap-ripple";
+    ripple.style.left = x + "px";
+    ripple.style.top = y + "px";
+    pitch.appendChild(ripple);
+    setTimeout(() => { ripple.remove(); }, 600);
+
+    // Faint trail mark, fades out over a few seconds
+    let mark = document.createElement("div");
+    mark.className = "tap-mark";
+    mark.style.left = x + "px";
+    mark.style.top = y + "px";
+    pitch.appendChild(mark);
+    requestAnimationFrame(() => { mark.style.opacity = '0'; });
+    setTimeout(() => { if (mark.isConnected) mark.remove(); }, 4200);
+
+    // Track it so it can be undone
+    tapHistory.push({ data: tapData, markEl: mark });
+    document.getElementById('undo-tap-btn').disabled = false;
+
+    // Local confirmation that the tap was sent
+    const radar = document.getElementById('radar-box');
+    document.getElementById('radar-text').innerText = `Sent — ${matchTime}' · X:${x} Y:${y}`;
+    radar.classList.add('flash-radar');
+    setTimeout(() => radar.classList.remove('flash-radar'), 900);
+  }
+
+  function undoLastTap(){
+    if (!tapHistory.length) return;
+    const last = tapHistory.pop();
+
+    // Remove its trail dot immediately
+    if (last.markEl && last.markEl.isConnected) last.markEl.remove();
+
+    // Tell the Command Center this tap was undone
+    localStorage.setItem("remontada_live_tap", JSON.stringify({ ...last.data, undo: true, id: Date.now() }));
+
+    const radar = document.getElementById('radar-box');
+    const label = last.data.result === 'goal' ? 'Goal undone' : 'Undone';
+    document.getElementById('radar-text').innerText = `${label} — ${last.data.matchTime}' · X:${last.data.x} Y:${last.data.y}`;
+    radar.classList.add('flash-radar');
+    setTimeout(() => radar.classList.remove('flash-radar'), 900);
+
+    document.getElementById('undo-tap-btn').disabled = tapHistory.length === 0;
+  }
+</script>
+</body>
+</html>
